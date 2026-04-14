@@ -24,6 +24,25 @@
     padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;
   }
   #toolbar button:hover { background: #30363d; }
+  #toolbar button.active {
+    background: #1f6feb; border-color: #58a6ff; color: #fff;
+  }
+  #toolbar .separator {
+    width: 1px; height: 20px; background: #30363d;
+  }
+  #toolbar .label-toggle {
+    display: flex; align-items: center; gap: 0;
+  }
+  #toolbar .label-toggle button {
+    border-radius: 0;
+  }
+  #toolbar .label-toggle button:first-child {
+    border-radius: 6px 0 0 6px;
+  }
+  #toolbar .label-toggle button:last-child {
+    border-radius: 0 6px 6px 0;
+    border-left: none;
+  }
   svg { display: block; }
   .node circle {
     stroke-width: 2px; cursor: pointer;
@@ -32,7 +51,21 @@
   .node circle:hover { r: 7; }
   .node text {
     font-size: 12px; fill: #c9d1d9;
-    pointer-events: none;
+    cursor: pointer;
+  }
+  .node text.has-url {
+    fill: #ffffff;
+  }
+  .node text.has-url:hover {
+    text-decoration: underline;
+    fill: #e6e6e6;
+  }
+  .node text.inferred-url {
+    fill: #d29922;
+  }
+  .node text.inferred-url:hover {
+    text-decoration: underline;
+    fill: #e8b73a;
   }
   .link {
     fill: none; stroke: #30363d; stroke-width: 1.5px;
@@ -48,6 +81,12 @@
 <div id="toolbar">
   <h1>Sitemap: InGen Technologies | Build Platforms That Scale</h1>
   <span class="stats" id="stats"></span>
+  <div class="separator"></div>
+  <div class="label-toggle">
+    <button id="showTitles" class="active">Titles</button>
+    <button id="showSlugs">Slugs</button>
+  </div>
+  <div class="separator"></div>
   <button id="expandAll">Expand All</button>
   <button id="collapseAll">Collapse All</button>
   <button id="resetZoom">Reset Zoom</button>
@@ -60,9 +99,12 @@
 // ---- Data ----
 const treeData = {
   "name": "InGen Technologies | Build Platforms That Scale",
+  "title": "InGen Technologies | Build Platforms That Scale",
+  "segment": "www.ingentek.com",
   "children": [
     {
       "segment": "about",
+      "title": "InGen Technologies | Build Platforms That Scale",
       "name": "InGen Technologies | Build Platforms That Scale",
       "children": [],
       "url": "https://www.ingentek.com/about",
@@ -70,14 +112,17 @@ const treeData = {
     },
     {
       "segment": "services",
+      "title": "InGen Technologies | Build Platforms That Scale",
       "name": "InGen Technologies | Build Platforms That Scale",
       "children": [
         {
           "segment": "platforms",
+          "title": "Cloud & Platform Engineering | Senior-Led Delivery",
           "name": "Cloud & Platform Engineering | Senior-Led Delivery",
           "children": [
             {
               "segment": "progress-openedge",
+              "title": "InGen Technologies | Build Platforms That Scale",
               "name": "InGen Technologies | Build Platforms That Scale",
               "children": [],
               "url": "https://www.ingentek.com/services/platforms/progress-openedge",
@@ -89,6 +134,7 @@ const treeData = {
         },
         {
           "segment": "composable",
+          "title": "InGen Technologies | Build Platforms That Scale",
           "name": "InGen Technologies | Build Platforms That Scale",
           "children": [],
           "url": "https://www.ingentek.com/services/composable",
@@ -96,6 +142,7 @@ const treeData = {
         },
         {
           "segment": "data-ai",
+          "title": "InGen Technologies | Build Platforms That Scale",
           "name": "InGen Technologies | Build Platforms That Scale",
           "children": [],
           "url": "https://www.ingentek.com/services/data-ai",
@@ -103,6 +150,7 @@ const treeData = {
         },
         {
           "segment": "workflows",
+          "title": "InGen Technologies | Build Platforms That Scale",
           "name": "InGen Technologies | Build Platforms That Scale",
           "children": [],
           "url": "https://www.ingentek.com/services/workflows",
@@ -114,10 +162,12 @@ const treeData = {
     },
     {
       "segment": "partnerships",
+      "title": "partnerships",
       "name": "partnerships",
       "children": [
         {
           "segment": "big-impact",
+          "title": "InGen Technologies | Build Platforms That Scale",
           "name": "InGen Technologies | Build Platforms That Scale",
           "children": [],
           "url": "https://www.ingentek.com/partnerships/big-impact",
@@ -129,10 +179,12 @@ const treeData = {
     },
     {
       "segment": "case-studies",
+      "title": "InGen Technologies | Build Platforms That Scale",
       "name": "InGen Technologies | Build Platforms That Scale",
       "children": [
         {
           "segment": "advanced-drainage-systems",
+          "title": "InGen Technologies | Build Platforms That Scale",
           "name": "InGen Technologies | Build Platforms That Scale",
           "children": [],
           "url": "https://www.ingentek.com/case-studies/advanced-drainage-systems",
@@ -140,6 +192,7 @@ const treeData = {
         },
         {
           "segment": "alm-data-platform",
+          "title": "InGen Technologies | Build Platforms That Scale",
           "name": "InGen Technologies | Build Platforms That Scale",
           "children": [],
           "url": "https://www.ingentek.com/case-studies/alm-data-platform",
@@ -147,6 +200,7 @@ const treeData = {
         },
         {
           "segment": "american-college-of-education",
+          "title": "InGen Technologies | Build Platforms That Scale",
           "name": "InGen Technologies | Build Platforms That Scale",
           "children": [],
           "url": "https://www.ingentek.com/case-studies/american-college-of-education",
@@ -154,6 +208,7 @@ const treeData = {
         },
         {
           "segment": "belmark-openedge-upgrade",
+          "title": "InGen Technologies | Build Platforms That Scale",
           "name": "InGen Technologies | Build Platforms That Scale",
           "children": [],
           "url": "https://www.ingentek.com/case-studies/belmark-openedge-upgrade",
@@ -161,6 +216,7 @@ const treeData = {
         },
         {
           "segment": "deaconess-cms",
+          "title": "InGen Technologies | Build Platforms That Scale",
           "name": "InGen Technologies | Build Platforms That Scale",
           "children": [],
           "url": "https://www.ingentek.com/case-studies/deaconess-cms",
@@ -168,6 +224,7 @@ const treeData = {
         },
         {
           "segment": "isg-cms",
+          "title": "InGen Technologies | Build Platforms That Scale",
           "name": "InGen Technologies | Build Platforms That Scale",
           "children": [],
           "url": "https://www.ingentek.com/case-studies/isg-cms",
@@ -175,6 +232,7 @@ const treeData = {
         },
         {
           "segment": "joe-piper-ach",
+          "title": "InGen Technologies | Build Platforms That Scale",
           "name": "InGen Technologies | Build Platforms That Scale",
           "children": [],
           "url": "https://www.ingentek.com/case-studies/joe-piper-ach",
@@ -182,6 +240,7 @@ const treeData = {
         },
         {
           "segment": "joe-piper-reports",
+          "title": "InGen Technologies | Build Platforms That Scale",
           "name": "InGen Technologies | Build Platforms That Scale",
           "children": [],
           "url": "https://www.ingentek.com/case-studies/joe-piper-reports",
@@ -189,6 +248,7 @@ const treeData = {
         },
         {
           "segment": "k-hovnanian-homes",
+          "title": "InGen Technologies | Build Platforms That Scale",
           "name": "InGen Technologies | Build Platforms That Scale",
           "children": [],
           "url": "https://www.ingentek.com/case-studies/k-hovnanian-homes",
@@ -196,6 +256,7 @@ const treeData = {
         },
         {
           "segment": "old-national-bank",
+          "title": "InGen Technologies | Build Platforms That Scale",
           "name": "InGen Technologies | Build Platforms That Scale",
           "children": [],
           "url": "https://www.ingentek.com/case-studies/old-national-bank",
@@ -203,6 +264,7 @@ const treeData = {
         },
         {
           "segment": "rapiscan-systems",
+          "title": "InGen Technologies | Build Platforms That Scale",
           "name": "InGen Technologies | Build Platforms That Scale",
           "children": [],
           "url": "https://www.ingentek.com/case-studies/rapiscan-systems",
@@ -210,6 +272,7 @@ const treeData = {
         },
         {
           "segment": "tandem-diabetes-care",
+          "title": "InGen Technologies | Build Platforms That Scale",
           "name": "InGen Technologies | Build Platforms That Scale",
           "children": [],
           "url": "https://www.ingentek.com/case-studies/tandem-diabetes-care",
@@ -217,6 +280,7 @@ const treeData = {
         },
         {
           "segment": "uc-denver",
+          "title": "InGen Technologies | Build Platforms That Scale",
           "name": "InGen Technologies | Build Platforms That Scale",
           "children": [],
           "url": "https://www.ingentek.com/case-studies/uc-denver",
@@ -224,6 +288,7 @@ const treeData = {
         },
         {
           "segment": "western-reserve-group",
+          "title": "InGen Technologies | Build Platforms That Scale",
           "name": "InGen Technologies | Build Platforms That Scale",
           "children": [],
           "url": "https://www.ingentek.com/case-studies/western-reserve-group",
@@ -235,6 +300,7 @@ const treeData = {
     },
     {
       "segment": "insights",
+      "title": "InGen Technologies | Build Platforms That Scale",
       "name": "InGen Technologies | Build Platforms That Scale",
       "children": [],
       "url": "https://www.ingentek.com/insights",
@@ -242,6 +308,7 @@ const treeData = {
     },
     {
       "segment": "contact",
+      "title": "InGen Technologies | Build Platforms That Scale",
       "name": "InGen Technologies | Build Platforms That Scale",
       "children": [],
       "url": "https://www.ingentek.com/contact",
@@ -249,6 +316,7 @@ const treeData = {
     },
     {
       "segment": "privacy",
+      "title": "InGen Technologies | Build Platforms That Scale",
       "name": "InGen Technologies | Build Platforms That Scale",
       "children": [],
       "url": "https://www.ingentek.com/privacy",
@@ -256,6 +324,7 @@ const treeData = {
     },
     {
       "segment": "terms",
+      "title": "InGen Technologies | Build Platforms That Scale",
       "name": "InGen Technologies | Build Platforms That Scale",
       "children": [],
       "url": "https://www.ingentek.com/terms",
@@ -265,6 +334,9 @@ const treeData = {
   "url": "https://www.ingentek.com/",
   "fullPath": "/"
 };
+
+// ---- Label mode: "title" or "slug" ----
+let labelMode = "title";
 
 // ---- Dimensions ----
 const margin = { top: 60, right: 200, bottom: 20, left: 120 };
@@ -310,7 +382,7 @@ const treemap = d3.tree().nodeSize([22, 220]);
 // ---- Tooltip ----
 const tooltip = document.getElementById("tooltip");
 function showTooltip(event, d) {
-  const url = d.data.url || d.data.fullPath || "";
+  const url = getNodeUrl(d) || d.data.fullPath || "";
   if (!url) return;
   tooltip.style.display = "block";
   tooltip.textContent = url;
@@ -322,6 +394,37 @@ function hideTooltip() { tooltip.style.display = "none"; }
 // ---- Colors ----
 const depthColors = ["#58a6ff", "#3fb950", "#d29922", "#f78166", "#bc8cff", "#f778ba"];
 function nodeColor(d) { return depthColors[d.depth % depthColors.length]; }
+
+// ---- Helper: get display label based on current mode ----
+function getLabel(d) {
+  if (labelMode === "slug") {
+    return d.data.segment || d.data.name;
+  }
+  return d.data.title || d.data.name;
+}
+
+// ---- Helper: classify node link type ----
+function linkClass(d) {
+  if (d.data.url) return "has-url";
+  return "inferred-url";
+}
+
+// ---- Helper: get the best URL for a node ----
+// Nodes with an explicit URL use that. Container-only nodes get a
+// URL constructed from their fullPath relative to the site origin.
+function getNodeUrl(d) {
+  if (d.data.url) return d.data.url;
+  // Walk up to root to find the origin from any descendant with a real URL
+  let origin = "";
+  root.descendants().some((n) => {
+    if (n.data.url) {
+      try { origin = new URL(n.data.url).origin; } catch {}
+      return true;
+    }
+  });
+  if (origin && d.data.fullPath) return origin + d.data.fullPath;
+  return null;
+}
 
 // ---- Update ----
 let i = 0;
@@ -356,24 +459,29 @@ function update(source) {
   const nodeEnter = node.enter().append("g")
     .attr("class", "node")
     .attr("transform", () => `translate(${source.y0},${source.x0})`)
-    .on("click", (event, d) => { toggle(d); update(d); })
     .on("mouseover", showTooltip)
     .on("mousemove", showTooltip)
-    .on("mouseout", hideTooltip)
-    .on("dblclick", (event, d) => {
-      if (d.data.url) window.open(d.data.url, "_blank");
-    });
+    .on("mouseout", hideTooltip);
 
+  // Circle: expand / collapse only
   nodeEnter.append("circle")
     .attr("r", 5)
     .style("fill", (d) => d._children ? nodeColor(d) : "#0d1117")
-    .style("stroke", (d) => nodeColor(d));
+    .style("stroke", (d) => nodeColor(d))
+    .on("click", (event, d) => { event.stopPropagation(); toggle(d); update(d); });
 
+  // Text: click opens the page URL in a new tab
   nodeEnter.append("text")
     .attr("dy", "0.35em")
     .attr("x", (d) => (d.children || d._children) ? -10 : 10)
     .attr("text-anchor", (d) => (d.children || d._children) ? "end" : "start")
-    .text((d) => truncate(d.data.name, 40));
+    .attr("class", (d) => linkClass(d))
+    .text((d) => truncate(getLabel(d), 40))
+    .on("click", (event, d) => {
+      event.stopPropagation();
+      const url = getNodeUrl(d);
+      if (url) window.open(url, "_blank");
+    });
 
   const nodeUpdate = nodeEnter.merge(node);
   nodeUpdate.transition().duration(400)
@@ -385,7 +493,9 @@ function update(source) {
 
   nodeUpdate.select("text")
     .attr("x", (d) => (d.children || d._children) ? -10 : 10)
-    .attr("text-anchor", (d) => (d.children || d._children) ? "end" : "start");
+    .attr("text-anchor", (d) => (d.children || d._children) ? "end" : "start")
+    .attr("class", (d) => linkClass(d))
+    .text((d) => truncate(getLabel(d), 40));
 
   node.exit().transition().duration(400)
     .attr("transform", () => `translate(${source.y},${source.x})`)
@@ -419,6 +529,26 @@ function collapseAll(d) {
 document.getElementById("expandAll").addEventListener("click", () => { expandAll(root); update(root); });
 document.getElementById("collapseAll").addEventListener("click", () => {
   root.children.forEach(collapseAll);
+  update(root);
+});
+
+// ---- Label toggle: Titles / Slugs ----
+const btnTitles = document.getElementById("showTitles");
+const btnSlugs = document.getElementById("showSlugs");
+
+btnTitles.addEventListener("click", () => {
+  if (labelMode === "title") return;
+  labelMode = "title";
+  btnTitles.classList.add("active");
+  btnSlugs.classList.remove("active");
+  update(root);
+});
+
+btnSlugs.addEventListener("click", () => {
+  if (labelMode === "slug") return;
+  labelMode = "slug";
+  btnSlugs.classList.add("active");
+  btnTitles.classList.remove("active");
   update(root);
 });
 
