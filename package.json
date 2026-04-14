@@ -1,0 +1,21 @@
+{
+  "name": "sitemap-visualizer",
+  "version": "1.0.0",
+  "description": "Reads a sitemap, fetches page titles, and generates an interactive D3.js tree diagram",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [
+    "sitemap",
+    "visualizer",
+    "d3"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cheerio": "^1.2.0",
+    "sitemapper": "^4.1.4"
+  }
+}
