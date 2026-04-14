@@ -1,5 +1,5 @@
 {
-  "name": "sitemap-visualizer",
+  "name": "sitetree",
   "version": "1.0.0",
   "description": "Reads a sitemap, fetches page titles, and generates an interactive D3.js tree diagram",
   "main": "index.js",
