@@ -1096,8 +1096,10 @@ const tooltip = document.getElementById("tooltip");
 function showTooltip(event, d) {
   const url = getNodeUrl(d) || d.data.fullPath || "";
   if (!url) return;
+  const childCount = (d.children || d._children || []).length;
+  const childInfo = childCount > 0 ? " (" + childCount + " children)" : "";
   tooltip.style.display = "block";
-  tooltip.textContent = url;
+  tooltip.textContent = url + childInfo;
   tooltip.style.left = (event.clientX + 12) + "px";
   tooltip.style.top = (event.clientY - 10) + "px";
 }
