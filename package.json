@@ -13,7 +13,7 @@
     "d3"
   ],
   "author": "",
-  "license": "ISC",
+  "license": "BSD-2-Clause",
   "dependencies": {
     "cheerio": "^1.2.0",
     "sitemapper": "^4.1.4"
