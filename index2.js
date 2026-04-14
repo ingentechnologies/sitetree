@@ -167,6 +167,22 @@ function generateHTML(tree, slugsOnly) {
     border-radius: 0 6px 6px 0;
     border-left: none;
   }
+  #toolbar .font-size-control {
+    display: flex; align-items: center; gap: 0;
+  }
+  #toolbar .font-size-control button {
+    border-radius: 0; min-width: 32px; text-align: center;
+  }
+  #toolbar .font-size-control button:first-child {
+    border-radius: 6px 0 0 6px;
+  }
+  #toolbar .font-size-control button:last-child {
+    border-radius: 0 6px 6px 0;
+  }
+  #toolbar .font-size-control .font-size-label {
+    background: #0d1117; border: 1px solid #30363d; border-left: none; border-right: none;
+    color: #c9d1d9; padding: 5px 10px; font-size: 13px; min-width: 48px; text-align: center;
+  }
   svg { display: block; }
   .node circle {
     stroke-width: 2px; cursor: pointer;
@@ -174,7 +190,7 @@ function generateHTML(tree, slugsOnly) {
   }
   .node circle:hover { r: 7; }
   .node text {
-    font-size: 12px; fill: #c9d1d9;
+    fill: #c9d1d9;
     cursor: pointer;
   }
   .node text.has-url {
@@ -211,6 +227,12 @@ function generateHTML(tree, slugsOnly) {
     <button id="showSlugs" class="${slugsActive}">Slugs</button>
   </div>
   <div class="separator"></div>
+  <div class="font-size-control">
+    <button id="fontDown">A-</button>
+    <span class="font-size-label" id="fontSizeLabel">16px</span>
+    <button id="fontUp">A+</button>
+  </div>
+  <div class="separator"></div>
   <button id="expandAll">Expand All</button>
   <button id="collapseAll">Collapse All</button>
   <button id="resetZoom">Reset Zoom</button>
@@ -225,6 +247,12 @@ const treeData = ${treeJSON};
 
 // ---- Label mode: "title" or "slug" ----
 let labelMode = "${defaultMode}";
+
+// ---- Font size ----
+const FONT_MIN = 10;
+const FONT_MAX = 28;
+const FONT_STEP = 2;
+let fontSize = 16;
 
 // ---- Dimensions ----
 const margin = { top: 60, right: 200, bottom: 20, left: 120 };
@@ -364,6 +392,7 @@ function update(source) {
     .attr("x", (d) => (d.children || d._children) ? -10 : 10)
     .attr("text-anchor", (d) => (d.children || d._children) ? "end" : "start")
     .attr("class", (d) => linkClass(d))
+    .style("font-size", fontSize + "px")
     .text((d) => truncate(getLabel(d), 40))
     .on("click", (event, d) => {
       event.stopPropagation();
@@ -383,6 +412,7 @@ function update(source) {
     .attr("x", (d) => (d.children || d._children) ? -10 : 10)
     .attr("text-anchor", (d) => (d.children || d._children) ? "end" : "start")
     .attr("class", (d) => linkClass(d))
+    .style("font-size", fontSize + "px")
     .text((d) => truncate(getLabel(d), 40));
 
   node.exit().transition().duration(400)
@@ -445,6 +475,25 @@ btnSlugs.addEventListener("click", () => {
   btnSlugs.classList.add("active");
   btnTitles.classList.remove("active");
   update(root);
+});
+
+// ---- Font size controls ----
+const fontSizeLabel = document.getElementById("fontSizeLabel");
+function applyFontSize() {
+  fontSizeLabel.textContent = fontSize + "px";
+  // Update the row spacing to match font size so lines don't overlap vertically
+  treemap.nodeSize([Math.max(22, fontSize * 1.6), 320]);
+  update(root);
+}
+document.getElementById("fontDown").addEventListener("click", () => {
+  if (fontSize <= FONT_MIN) return;
+  fontSize -= FONT_STEP;
+  applyFontSize();
+});
+document.getElementById("fontUp").addEventListener("click", () => {
+  if (fontSize >= FONT_MAX) return;
+  fontSize += FONT_STEP;
+  applyFontSize();
 });
 
 // ---- Initial render ----
