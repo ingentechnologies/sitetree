@@ -127,6 +127,9 @@ function generateHTML(tree, slugsOnly) {
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
 <title>Sitemap - ${tree.name}</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -188,7 +191,11 @@ function generateHTML(tree, slugsOnly) {
     stroke-width: 2px; cursor: pointer;
     transition: r 0.15s ease;
   }
-  .node circle:hover { r: 7; }
+  .node circle.leaf:hover { r: 7; }
+  .node circle.parent:hover { r: 14; }
+  .node .count-label {
+    font-size: 9px; pointer-events: none; font-weight: 600;
+  }
   .node text {
     fill: #c9d1d9;
     cursor: pointer;
@@ -236,6 +243,8 @@ function generateHTML(tree, slugsOnly) {
   <button id="expandAll">Expand All</button>
   <button id="collapseAll">Collapse All</button>
   <button id="resetZoom">Reset Zoom</button>
+  <div class="separator"></div>
+  <button id="exportCsv">Export CSV</button>
 </div>
 <div class="tooltip" id="tooltip"></div>
 <svg id="canvas"></svg>
@@ -283,7 +292,27 @@ root.x0 = height / 2;
 root.y0 = 0;
 
 function countNodes(d) { return d.children ? d.children.reduce((s, c) => s + countNodes(c), 1) : 1; }
-document.getElementById("stats").textContent = countNodes(root) + " pages";
+function countUrls(node) {
+  let n = node.url ? 1 : 0;
+  if (node.children) n += node.children.reduce((s, c) => s + countUrls(c), 0);
+  return n;
+}
+const totalNodes = countNodes(root);
+const totalUrls = countUrls(treeData);
+document.getElementById("stats").textContent = totalUrls + " URLs · " + totalNodes + " nodes";
+
+// Count all descendants (children, grandchildren, etc.) excluding the node itself.
+// Considers both expanded (.children) and collapsed (._children) nodes.
+function countDescendants(d) {
+  const kids = d.children || d._children || [];
+  if (kids.length === 0) return 0;
+  return kids.reduce((sum, c) => sum + 1 + countDescendants(c), 0);
+}
+function formatCount(n) { return n > 999 ? "1k+" : String(n); }
+function nodeRadius(d) {
+  const c = countDescendants(d);
+  return c > 0 ? 12 : 5;
+}
 
 // Start with top 2 levels expanded
 root.descendants().forEach((d) => {
@@ -293,17 +322,20 @@ root.descendants().forEach((d) => {
   }
 });
 
-const treemap = d3.tree().nodeSize([22, 320]);
+const treemap = d3.tree().nodeSize([28, 320]);
 
 // ---- Tooltip ----
 const tooltip = document.getElementById("tooltip");
 function showTooltip(event, d) {
-  const url = getNodeUrl(d) || d.data.fullPath || "";
-  if (!url) return;
-  const childCount = (d.children || d._children || []).length;
-  const childInfo = childCount > 0 ? " (" + childCount + " children)" : "";
+  const directCount = (d.children || d._children || []).length;
+  if (directCount === 0) return;
+  const totalCount = countDescendants(d);
+  const parts = [directCount + " direct children"];
+  if (totalCount !== directCount) {
+    parts.push(totalCount + " total descendants");
+  }
   tooltip.style.display = "block";
-  tooltip.textContent = url + childInfo;
+  tooltip.textContent = parts.join(" \\u00b7 ");
   tooltip.style.left = (event.clientX + 12) + "px";
   tooltip.style.top = (event.clientY - 10) + "px";
 }
@@ -383,17 +415,30 @@ function update(source) {
 
   // Circle: expand / collapse only
   nodeEnter.append("circle")
-    .attr("r", 5)
+    .attr("r", (d) => nodeRadius(d))
+    .attr("class", (d) => countDescendants(d) > 0 ? "parent" : "leaf")
     .style("fill", (d) => d._children ? nodeColor(d) : "#0d1117")
     .style("stroke", (d) => nodeColor(d))
     .on("click", (event, d) => { event.stopPropagation(); toggle(d); update(d); });
 
+  // Count label inside circle for non-leaf nodes
+  nodeEnter.append("text")
+    .attr("class", "count-label")
+    .attr("text-anchor", "middle")
+    .attr("dy", "0.35em")
+    .style("fill", (d) => d._children ? "#000" : "#fff")
+    .text((d) => { const c = countDescendants(d); return c > 0 ? formatCount(c) : ""; });
+
   // Text: click opens the page URL in a new tab
   nodeEnter.append("text")
     .attr("dy", "0.35em")
-    .attr("x", (d) => (d.children || d._children) ? -10 : 10)
+    .attr("x", (d) => {
+      const r = nodeRadius(d);
+      const offset = r + 4;
+      return (d.children || d._children) ? -offset : offset;
+    })
     .attr("text-anchor", (d) => (d.children || d._children) ? "end" : "start")
-    .attr("class", (d) => linkClass(d))
+    .attr("class", (d) => "node-label " + linkClass(d))
     .style("font-size", fontSize + "px")
     .text((d) => truncate(getLabel(d), 40))
     .on("click", (event, d) => {
@@ -407,13 +452,23 @@ function update(source) {
     .attr("transform", (d) => \`translate(\${d.y},\${d.x})\`);
 
   nodeUpdate.select("circle")
+    .attr("r", (d) => nodeRadius(d))
+    .attr("class", (d) => countDescendants(d) > 0 ? "parent" : "leaf")
     .style("fill", (d) => d._children ? nodeColor(d) : "#0d1117")
     .style("stroke", (d) => nodeColor(d));
 
-  nodeUpdate.select("text")
-    .attr("x", (d) => (d.children || d._children) ? -10 : 10)
+  nodeUpdate.select("text.count-label")
+    .style("fill", (d) => d._children ? "#000" : "#fff")
+    .text((d) => { const c = countDescendants(d); return c > 0 ? formatCount(c) : ""; });
+
+  nodeUpdate.select("text.node-label")
+    .attr("x", (d) => {
+      const r = nodeRadius(d);
+      const offset = r + 4;
+      return (d.children || d._children) ? -offset : offset;
+    })
     .attr("text-anchor", (d) => (d.children || d._children) ? "end" : "start")
-    .attr("class", (d) => linkClass(d))
+    .attr("class", (d) => "node-label " + linkClass(d))
     .style("font-size", fontSize + "px")
     .text((d) => truncate(getLabel(d), 40));
 
@@ -484,7 +539,7 @@ const fontSizeLabel = document.getElementById("fontSizeLabel");
 function applyFontSize() {
   fontSizeLabel.textContent = fontSize + "px";
   // Update the row spacing to match font size so lines don't overlap vertically
-  treemap.nodeSize([Math.max(22, fontSize * 1.6), 320]);
+  treemap.nodeSize([Math.max(28, fontSize * 1.6), 320]);
   update(root);
 }
 document.getElementById("fontDown").addEventListener("click", () => {
@@ -496,6 +551,27 @@ document.getElementById("fontUp").addEventListener("click", () => {
   if (fontSize >= FONT_MAX) return;
   fontSize += FONT_STEP;
   applyFontSize();
+});
+
+// ---- Export CSV ----
+function collectUrls(node, acc) {
+  if (node.url) acc.push({ url: node.url, title: node.title || "", slug: node.segment || "" });
+  if (node.children) node.children.forEach((c) => collectUrls(c, acc));
+}
+document.getElementById("exportCsv").addEventListener("click", () => {
+  const acc = [];
+  collectUrls(treeData, acc);
+  const rows = [["url", "title", "slug"]];
+  acc.forEach(({ url, title, slug }) => {
+    rows.push([url, title, slug].map((v) => \`"\${v.replace(/"/g, '""')}"\`));
+  });
+  const csv = rows.map((r) => r.join(",")).join("\\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = (treeData.name || "sitemap") + ".csv";
+  a.click();
+  URL.revokeObjectURL(a.href);
 });
 
 // ---- Initial render ----
