@@ -15,10 +15,13 @@ const CONCURRENCY = 5; // how many pages to fetch in parallel
 const FETCH_TIMEOUT = 10_000; // ms per page request
 
 if (!SITEMAP_URL) {
-  console.error("Usage: node index2.js <sitemap-url> [output-file] [--slugs-only]");
-  console.error("  Example: node index2.js https://example.com/sitemap.xml sitemap.html");
-  console.error("  --slugs-only  Skip fetching page titles; default view shows slugs");
-  process.exit(1);
+  // Only error out when running as the main script, not when imported by tests
+  if (process.argv[1] && import.meta.url.endsWith(process.argv[1].split(/[\\/]/).pop())) {
+    console.error("Usage: node index.js <sitemap-url> [output-file] [--slugs-only]");
+    console.error("  Example: node index.js https://example.com/sitemap.xml sitemap.html");
+    console.error("  --slugs-only  Skip fetching page titles; default view shows slugs");
+    process.exit(1);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -74,7 +77,7 @@ async function fetchAllTitles(urls) {
 // 3. Build a tree structure from URLs
 //    Each node carries both `title` and `segment` so the UI can toggle.
 // ---------------------------------------------------------------------------
-function buildTree(urls, titleMap) {
+export function buildTree(urls, titleMap) {
   const root = { name: "Site", title: "Site", segment: "/", children: [], url: null, fullPath: "/" };
 
   for (const rawUrl of urls) {
@@ -116,7 +119,7 @@ function buildTree(urls, titleMap) {
 // 4. Generate the HTML with an interactive D3.js collapsible tree
 //    Includes a toggle button to switch between Title and Slug labels.
 // ---------------------------------------------------------------------------
-function generateHTML(tree, slugsOnly) {
+export function generateHTML(tree, slugsOnly) {
   const treeJSON = JSON.stringify(tree, null, 2);
   const defaultMode = slugsOnly ? "slug" : "title";
   const titlesActive = slugsOnly ? "" : "active";
@@ -587,6 +590,15 @@ window.addEventListener("resize", () => {
 }
 
 // ---------------------------------------------------------------------------
+// 5. Collect all URLs from a tree (mirrors the in-browser collectUrls logic)
+// ---------------------------------------------------------------------------
+export function collectUrls(node, acc = []) {
+  if (node.url) acc.push({ url: node.url, title: node.title || "", slug: node.segment || "" });
+  if (node.children) node.children.forEach((c) => collectUrls(c, acc));
+  return acc;
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 async function main() {
@@ -619,7 +631,10 @@ async function main() {
   console.log(`\nDone! Interactive sitemap written to: ${outPath}`);
 }
 
-main().catch((err) => {
-  console.error("Fatal error:", err);
-  process.exit(1);
-});
+// Only run when executed directly, not when imported by tests
+if (process.argv[1] && import.meta.url.endsWith(process.argv[1].split(/[\\/]/).pop())) {
+  main().catch((err) => {
+    console.error("Fatal error:", err);
+    process.exit(1);
+  });
+}
